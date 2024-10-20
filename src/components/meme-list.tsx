@@ -1,25 +1,11 @@
-import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
-import {
-    Avatar,
-    Box,
-    Collapse,
-    Flex,
-    Icon,
-    LinkBox,
-    LinkOverlay,
-    Text,
-    Input,
-    VStack,
-    Button,
-    Stack,
-} from '@chakra-ui/react'
-import { CaretDown, CaretUp, Chat } from '@phosphor-icons/react'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { Box, Flex, Text, VStack, Button, Stack } from '@chakra-ui/react'
 import { format } from 'timeago.js'
 import { getUserById } from '../api/user'
 import { useAuthToken } from '../contexts/authentication'
 import { Loader } from '../components/loader'
 import { MemePicture } from '../components/meme-picture'
-import { Fragment, useRef, useState } from 'react'
+import { Fragment } from 'react'
 import { jwtDecode } from 'jwt-decode'
 import { getMemes, GetMemesResponse } from '../api/meme-list'
 import { MemeComment } from './meme-comment'

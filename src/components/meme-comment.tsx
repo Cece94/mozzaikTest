@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
+import {
+    useInfiniteQuery,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from '@tanstack/react-query'
 import {
     Avatar,
     Box,
@@ -20,7 +25,11 @@ import { useAuthToken } from '../contexts/authentication'
 import { Loader } from '../components/loader'
 import { Fragment, useState } from 'react'
 import { jwtDecode } from 'jwt-decode'
-import { getMemeComments, GetMemeCommentsResponse } from '../api/comment'
+import {
+    createMemeComment,
+    getMemeComments,
+    GetMemeCommentsResponse,
+} from '../api/comment'
 import { MemeResponsDataDto } from '../api/meme-list'
 
 interface MemeCommentProps {
@@ -29,6 +38,7 @@ interface MemeCommentProps {
 
 export const MemeComment: React.FC<MemeCommentProps> = ({ meme }) => {
     const token = useAuthToken()
+    const queryClient = useQueryClient()
 
     const { isLoading, fetchNextPage, hasNextPage, data, refetch } =
         useInfiniteQuery<GetMemeCommentsResponse, Error>({
@@ -72,13 +82,17 @@ export const MemeComment: React.FC<MemeCommentProps> = ({ meme }) => {
     const [commentContent, setCommentContent] = useState<{
         [key: string]: string
     }>({})
-    /* 
-     TODO add comment and dropdown comment
+
     const { mutate } = useMutation({
         mutationFn: async (data: { memeId: string; content: string }) => {
             await createMemeComment(token, data.memeId, data.content)
         },
-    })*/
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['comments', meme.id] })
+            refetch()
+            setCommentContent((prevState) => ({ ...prevState, [meme.id]: '' }))
+        },
+    })
 
     if (isLoading) {
         return <Loader data-testid="meme-comment-loader" />
@@ -115,10 +129,10 @@ export const MemeComment: React.FC<MemeCommentProps> = ({ meme }) => {
                         onSubmit={(event) => {
                             event.preventDefault()
                             if (commentContent[meme.id]) {
-                                /* mutate({
+                                mutate({
                                     memeId: meme.id,
                                     content: commentContent[meme.id],
-                                })*/
+                                })
                             }
                         }}
                     >
@@ -141,6 +155,9 @@ export const MemeComment: React.FC<MemeCommentProps> = ({ meme }) => {
                                 }}
                                 value={commentContent[meme.id]}
                             />
+                            <Button type="submit" colorScheme="blue">
+                                Commenter
+                            </Button>
                         </Flex>
                     </form>
                 </Box>

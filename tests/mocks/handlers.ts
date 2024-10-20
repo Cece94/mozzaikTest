@@ -18,7 +18,7 @@ const users = {
   },
 };
 
-const memes = [
+export const memes = [
   {
     id: "dummy_meme_id_1",
     authorId: "dummy_user_id_1",
@@ -31,9 +31,9 @@ const memes = [
     ],
     createdAt: "2021-09-01T12:00:00Z",
   },
-]
+];
 
-const comments = [
+export const comments = [
   {
     id: "dummy_comment_id_1",
     memeId: "dummy_meme_id_1",
@@ -55,7 +55,7 @@ const comments = [
     content: "dummy comment 3",
     createdAt: "2021-09-01T12:00:00Z",
   },
-]
+];
 
 export const handlers = [
   http.post<{}, { username: string; password: string }>(
@@ -75,7 +75,7 @@ export const handlers = [
       return new HttpResponse(null, {
         status: 401,
       });
-    },
+    }
   ),
   http.get<{ id: string }>(
     "https://fetestapi.int.mozzaik365.net/api/users/:id",
@@ -87,7 +87,7 @@ export const handlers = [
       return new HttpResponse(null, {
         status: 404,
       });
-    },
+    }
   ),
   http.get("https://fetestapi.int.mozzaik365.net/api/memes", async () => {
     return HttpResponse.json({
@@ -100,13 +100,13 @@ export const handlers = [
     "https://fetestapi.int.mozzaik365.net/api/memes/:id/comments",
     async ({ params }) => {
       const memeComments = comments.filter(
-        (comment) => comment.memeId === params.id,
+        (comment) => comment.memeId === params.id
       );
       return HttpResponse.json({
         total: memeComments.length,
         pageSize: memeComments.length,
         results: memeComments,
       });
-    },
+    }
   ),
 ];
