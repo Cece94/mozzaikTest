@@ -81,7 +81,7 @@ export const MemeComment: React.FC<MemeCommentProps> = ({ meme }) => {
 
     const [commentContent, setCommentContent] = useState<{
         [key: string]: string
-    }>({})
+    }>({ [meme.id]: '' })
 
     const { mutate } = useMutation({
         mutationFn: async (data: { memeId: string; content: string }) => {

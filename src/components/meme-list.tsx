@@ -1,22 +1,41 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { Box, Flex, Text, VStack, Button, Stack } from '@chakra-ui/react'
+import {
+    useInfiniteQuery,
+    useQuery,
+    useQueryClient,
+} from '@tanstack/react-query'
+import {
+    Box,
+    Flex,
+    Text,
+    VStack,
+    Button,
+    Stack,
+    Avatar,
+} from '@chakra-ui/react'
 import { format } from 'timeago.js'
-import { getUserById } from '../api/user'
+import { getUserById, GetUserByIdResponse, getUsers } from '../api/user'
 import { useAuthToken } from '../contexts/authentication'
 import { Loader } from '../components/loader'
 import { MemePicture } from '../components/meme-picture'
-import { Fragment } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { jwtDecode } from 'jwt-decode'
-import { getMemes, GetMemesResponse } from '../api/meme-list'
+import {
+    getMemes,
+    GetMemesResponse,
+    MemeResponsDataDto,
+} from '../api/meme-list'
 import { MemeComment } from './meme-comment'
 
 export const MemeList: React.FC = () => {
     const token = useAuthToken()
+    const queryClient = useQueryClient()
 
-    const { isLoading, fetchNextPage, hasNextPage, data } = useInfiniteQuery<
-        GetMemesResponse,
-        Error
-    >({
+    const {
+        isLoading,
+        fetchNextPage,
+        hasNextPage,
+        data: memeListData,
+    } = useInfiniteQuery<GetMemesResponse, Error>({
         queryKey: ['memes'],
         queryFn: ({ pageParam = 1 }) => getMemes(token, pageParam as number),
         getNextPageParam: (lastPage, allPages) => {
@@ -28,12 +47,41 @@ export const MemeList: React.FC = () => {
         initialPageParam: 1,
     })
 
-    const memeList: GetMemesResponse['results'] =
-        data?.pages.flatMap((page) => page.results) || []
+    useEffect(() => {
+        if (memeListData) {
+            const updateMemeAuthors = async () => {
+                const newAuthorIds = memeListData.pages.flatMap((page) =>
+                    page.results.map((meme) => meme.authorId)
+                )
+                const uniqueNewAuthorIds = [...new Set(newAuthorIds)]
 
-    const currentPage = data ? data.pages.length : 0
-    const totalPages = data?.pages[0]
-        ? Math.ceil(data.pages[0].total / data.pages[0].pageSize)
+                const authors = await getUsers(token, uniqueNewAuthorIds)
+                const authorMap = Object.fromEntries(
+                    authors.map((author) => [author.id, author])
+                )
+
+                const tempMemeList = JSON.parse(JSON.stringify(memeListData))
+                tempMemeList.pages.forEach((page: any) => {
+                    page.results.forEach((meme: MemeResponsDataDto) => {
+                        meme.author = authorMap[meme.authorId]
+                    })
+                })
+
+                queryClient.setQueryData(['memes'], tempMemeList)
+            }
+
+            updateMemeAuthors()
+        }
+    }, [memeListData])
+
+    const memeList: GetMemesResponse['results'] =
+        memeListData?.pages.flatMap((page) => page.results) || []
+
+    const currentPage = memeListData ? memeListData.pages.length : 0
+    const totalPages = memeListData?.pages[0]
+        ? Math.ceil(
+              memeListData.pages[0].total / memeListData.pages[0].pageSize
+          )
         : 0
 
     const handleLoadMore = () => {
@@ -58,23 +106,23 @@ export const MemeList: React.FC = () => {
             {memeList?.map((meme) => (
                 <VStack key={meme.id} p={4} width="full" align="stretch">
                     <Flex justifyContent="space-between" alignItems="center">
-                        {/*
+                        {
                             <Flex>
                                 <Avatar
                                     borderWidth="1px"
                                     borderColor="gray.300"
                                     size="xs"
-                                    name={meme.author.username}
-                                    src={meme.author.pictureUrl}
+                                    name={meme.author?.username}
+                                    src={meme.author?.pictureUrl}
                                 />
                                 <Text
                                     ml={2}
                                     data-testid={`meme-author-${meme.id}`}
                                 >
-                                    {meme.author.username}
+                                    {meme.author?.username}
                                 </Text>
                             </Flex>
-                        */}
+                        }
                         <Text
                             fontStyle="italic"
                             color="gray.500"

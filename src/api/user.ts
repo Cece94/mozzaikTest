@@ -23,3 +23,28 @@ export async function getUserById(
         },
     }).then((res) => checkStatus(res).json())
 }
+
+/**
+ * Get a list of users
+ * @param token
+ * @param userIds
+ */
+export async function getUsers(
+    token: string,
+    userIds: string[]
+): Promise<GetUserByIdResponse[]> {
+    const queryParams = new URLSearchParams({ ids: userIds.join(',') })
+    const response = await fetch(`${BASE_URL}/users?${queryParams}`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+    })
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch users')
+    }
+
+    return response.json()
+}
