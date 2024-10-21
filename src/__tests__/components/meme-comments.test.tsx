@@ -19,6 +19,7 @@ vi.mock('../../api/comment', () => ({
 
 vi.mock('../../api/user', () => ({
     getUserById: vi.fn(),
+    getUsers: vi.fn(), // Add this line to mock getUsers
 }))
 
 describe('MemeComment', () => {
@@ -40,6 +41,13 @@ describe('MemeComment', () => {
             total: mockComments.length,
             pageSize: 10,
         })
+        vi.mocked(UserApi.getUsers).mockResolvedValue(
+            mockComments.map((comment) => ({
+                id: comment.authorId,
+                username: comment.author.username,
+                pictureUrl: comment.author.pictureUrl,
+            }))
+        )
     })
 
     it('sends the added comment correctly', async () => {
@@ -56,7 +64,18 @@ describe('MemeComment', () => {
 
         vi.mocked(CommentApi.getMemeComments).mockImplementation(() =>
             Promise.resolve({
-                results: mockComments,
+                results: mockComments.map((comment) => ({
+                    id: comment.id,
+                    content: comment.content,
+                    createdAt: comment.createdAt,
+                    authorId: comment.authorId,
+                    memeId: comment.memeId,
+                    author: {
+                        id: comment.authorId,
+                        username: comment.author.username,
+                        pictureUrl: comment.author.pictureUrl,
+                    },
+                })),
                 total: mockComments.length,
                 pageSize: 10,
             })

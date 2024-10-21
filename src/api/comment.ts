@@ -1,4 +1,5 @@
 import { BASE_URL, checkStatus } from '../api'
+import { GetUserByIdResponse } from './user'
 
 export type GetMemeCommentsResponse = {
     total: number
@@ -12,6 +13,7 @@ export type CommentResponseDto = {
     memeId: string
     content: string
     createdAt: string
+    author: GetUserByIdResponse
 }
 
 /**

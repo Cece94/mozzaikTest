@@ -20,7 +20,7 @@ import {
 } from '@chakra-ui/react'
 import { CaretDown, CaretUp, Chat } from '@phosphor-icons/react'
 import { format } from 'timeago.js'
-import { getUserById } from '../api/user'
+import { getUserById, getUsers } from '../api/user'
 import { useAuthToken } from '../contexts/authentication'
 import { Loader } from '../components/loader'
 import { Fragment, useState } from 'react'
@@ -40,27 +40,66 @@ export const MemeComment: React.FC<MemeCommentProps> = ({ meme }) => {
     const token = useAuthToken()
     const queryClient = useQueryClient()
 
-    const { isLoading, fetchNextPage, hasNextPage, data, refetch } =
-        useInfiniteQuery<GetMemeCommentsResponse, Error>({
-            queryKey: ['comments', meme.id],
-            queryFn: ({ pageParam = 1 }) =>
-                getMemeComments(token, meme.id, pageParam as number),
-            getNextPageParam: (lastPage, allPages) => {
-                const nextPage = allPages.length + 1
-                return nextPage <= Math.ceil(lastPage.total / lastPage.pageSize)
-                    ? nextPage
-                    : undefined
-            },
-            initialPageParam: 1,
-            enabled: false,
-        })
+    const {
+        isLoading,
+        fetchNextPage,
+        hasNextPage,
+        data: commentData,
+        refetch,
+    } = useInfiniteQuery<GetMemeCommentsResponse, Error>({
+        queryKey: ['comments', meme.id],
+        queryFn: async ({ pageParam = 1 }) => {
+            const comments = await getMemeComments(
+                token,
+                meme.id,
+                pageParam as number
+            )
+
+            // Extract unique author IDs from the comments
+            const authorIds = [
+                ...new Set(comments.results.map((comment) => comment.authorId)),
+            ]
+
+            // Fetch user information for all authors
+            const authors = await getUsers(token, authorIds)
+
+            // Create a map of user IDs to user objects for quick lookup
+            const userMap = new Map(
+                authors.map((author) => [author.id, author])
+            )
+
+            // add authors information to comments
+            const enhancedResults = comments.results.map((comment) => ({
+                ...comment,
+                author: userMap.get(comment.authorId) || {
+                    id: comment.authorId,
+                    username: 'Unnamed',
+                    pictureUrl: '',
+                },
+            }))
+
+            return {
+                ...comments,
+                results: enhancedResults,
+            }
+        },
+
+        getNextPageParam: (lastPage, allPages) => {
+            const nextPage = allPages.length + 1
+            return nextPage <= Math.ceil(lastPage.total / lastPage.pageSize)
+                ? nextPage
+                : undefined
+        },
+        initialPageParam: 1,
+        enabled: false,
+    })
 
     const memeCommentList: GetMemeCommentsResponse['results'] =
-        data?.pages.flatMap((page) => page.results) || []
+        commentData?.pages.flatMap((page) => page.results) || []
 
-    const currentPage = data ? data.pages.length : 0
-    const totalPages = data?.pages[0]
-        ? Math.ceil(data.pages[0].total / data.pages[0].pageSize)
+    const currentPage = commentData ? commentData.pages.length : 0
+    const totalPages = commentData?.pages[0]
+        ? Math.ceil(commentData.pages[0].total / commentData.pages[0].pageSize)
         : 0
 
     const { data: user } = useQuery({
@@ -94,7 +133,7 @@ export const MemeComment: React.FC<MemeCommentProps> = ({ meme }) => {
         },
     })
 
-    if (isLoading) {
+    if (isLoading && !isCommentSectionOpen) {
         return <Loader data-testid="meme-comment-loader" />
     }
 
@@ -111,7 +150,9 @@ export const MemeComment: React.FC<MemeCommentProps> = ({ meme }) => {
                             <Text
                                 data-testid={`meme-comments-count-${meme.id}`}
                             >
-                                {meme.commentsCount} comments
+                                {commentData?.pages[0]?.total ||
+                                    meme.commentsCount}{' '}
+                                comments
                             </Text>
                         </LinkOverlay>
                         <Icon
@@ -165,13 +206,13 @@ export const MemeComment: React.FC<MemeCommentProps> = ({ meme }) => {
                     <VStack align="stretch" spacing={4}>
                         {memeCommentList.map((comment) => (
                             <Flex key={comment.id}>
-                                <Avatar /*  TODO update with author from user query
+                                <Avatar
                                     borderWidth="1px"
                                     borderColor="gray.300"
                                     size="sm"
-                                    name={comment.author.username}
-                                    src={comment.author.pictureUrl}
-                                    mr={2}*/
+                                    name={comment?.author?.username}
+                                    src={comment?.author?.pictureUrl}
+                                    mr={2}
                                 />
                                 <Box
                                     p={2}
@@ -187,7 +228,7 @@ export const MemeComment: React.FC<MemeCommentProps> = ({ meme }) => {
                                             <Text
                                                 data-testid={`meme-comment-author-${meme.id}-${comment.id}`}
                                             >
-                                                {/* TODO update with author from user query comment.author.username */}
+                                                {comment?.author?.username}
                                             </Text>
                                         </Flex>
                                         <Text

@@ -40,6 +40,11 @@ export const comments = [
     authorId: "dummy_user_id_1",
     content: "dummy comment 1",
     createdAt: "2021-09-01T12:00:00Z",
+    author: {
+      id: "dummy_user_id_1",
+      username: "dummy_user_1",
+      pictureUrl: "https://dummy.url/1",
+    },
   },
   {
     id: "dummy_comment_id_2",
@@ -47,6 +52,11 @@ export const comments = [
     authorId: "dummy_user_id_2",
     content: "dummy comment 2",
     createdAt: "2021-09-01T12:00:00Z",
+    author: {
+      id: "dummy_user_id_2",
+      username: "dummy_user_2",
+      pictureUrl: "https://dummy.url/2",
+    },
   },
   {
     id: "dummy_comment_id_3",
@@ -54,6 +64,11 @@ export const comments = [
     authorId: "dummy_user_id_3",
     content: "dummy comment 3",
     createdAt: "2021-09-01T12:00:00Z",
+    author: {
+      id: "dummy_user_id_3",
+      username: "dummy_user_3",
+      pictureUrl: "https://dummy.url/3",
+    },
   },
 ];
 
