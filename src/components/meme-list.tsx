@@ -90,13 +90,6 @@ export const MemeList: React.FC = () => {
         }
     }
 
-    const { data: user } = useQuery({
-        queryKey: ['user'],
-        queryFn: async () => {
-            return await getUserById(token, jwtDecode<{ id: string }>(token).id)
-        },
-    })
-
     if (isLoading) {
         return <Loader data-testid="meme-feed-loader" />
     }

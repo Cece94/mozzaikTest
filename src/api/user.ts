@@ -1,5 +1,7 @@
 import { BASE_URL, checkStatus } from '../api'
 
+type UUID = string & { __brand: 'UUID' }
+
 export type GetUserByIdResponse = {
     id: string
     username: string
@@ -31,9 +33,13 @@ export async function getUserById(
  */
 export async function getUsers(
     token: string,
-    userIds: string[]
+    userIds: UUID[]
 ): Promise<GetUserByIdResponse[]> {
-    const queryParams = new URLSearchParams({ ids: userIds.join(',') })
+    const queryParams = new URLSearchParams()
+    userIds.forEach((id) => {
+        queryParams.append('ids', id)
+    })
+
     const response = await fetch(`${BASE_URL}/users?${queryParams}`, {
         method: 'GET',
         headers: {
