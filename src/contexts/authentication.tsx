@@ -93,14 +93,16 @@ export function useAuthentication() {
     const { state, signout } = context
 
     useEffect(() => {
-        if (state.isAuthenticated) {
+        if (state.isAuthenticated && navigate) {
             try {
                 const decodedToken = jwtDecode<{ exp: number }>(state.token)
                 if (decodedToken.exp * 1000 < Date.now()) {
+                    signout()
                     navigate({ to: '/' })
                 }
             } catch (error) {
                 console.error('Error decoding token', error)
+                signout()
                 navigate({ to: '/' })
             }
         }

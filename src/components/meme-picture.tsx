@@ -1,4 +1,5 @@
 import { Box, Text, useDimensions } from '@chakra-ui/react'
+import React from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Draggable, { DraggableData, DraggableEvent } from 'react-draggable'
 
@@ -28,6 +29,7 @@ export const MemePicture: React.FC<MemePictureProps> = ({
     const containerRef = useRef<HTMLDivElement>(null)
     const dimensions = useDimensions(containerRef, true)
     const boxWidth = dimensions?.borderBox.width
+    const nodeRef = React.useRef(null)
 
     const [localTexts, setLocalTexts] = useState(rawTexts)
 
@@ -100,30 +102,33 @@ export const MemePicture: React.FC<MemePictureProps> = ({
                     onStop={(e, data) => handleDrag(index, e, data)}
                     bounds="parent"
                     disabled={!isDraggable}
+                    nodeRef={nodeRef}
                 >
-                    <Text
-                        key={index}
-                        position="absolute"
-                        fontSize={fontSize}
-                        color={
-                            selectedTextIndex === index && isDraggable
-                                ? 'blue'
-                                : 'white'
-                        }
-                        fontFamily="Impact"
-                        fontWeight="bold"
-                        userSelect="none"
-                        textTransform="uppercase"
-                        cursor="pointer"
-                        style={{
-                            WebkitTextStroke: '1px black',
-                            position: 'absolute',
-                        }}
-                        data-testid={`${dataTestId}-text-${index}`}
-                        onClick={() => setSelectedTextIndex(index)}
-                    >
-                        {text.content}
-                    </Text>
+                    <div ref={nodeRef}>
+                        <Text
+                            key={index}
+                            position="absolute"
+                            fontSize={fontSize}
+                            color={
+                                selectedTextIndex === index && isDraggable
+                                    ? 'blue'
+                                    : 'white'
+                            }
+                            fontFamily="Impact"
+                            fontWeight="bold"
+                            userSelect="none"
+                            textTransform="uppercase"
+                            cursor="pointer"
+                            style={{
+                                WebkitTextStroke: '1px black',
+                                position: 'absolute',
+                            }}
+                            data-testid={`${dataTestId}-text-${index}`}
+                            onClick={() => setSelectedTextIndex(index)}
+                        >
+                            {text.content}
+                        </Text>
+                    </div>
                 </Draggable>
             ))}
         </Box>
