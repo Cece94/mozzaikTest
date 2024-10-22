@@ -28,11 +28,8 @@ export const MemePicture: React.FC<MemePictureProps> = ({
 }) => {
     // Reference to the container div for measuring dimensions
     const containerRef = useRef<HTMLDivElement>(null)
-    // Hook to get dimensions of the container
     const dimensions = useDimensions(containerRef, true)
     const boxWidth = dimensions?.borderBox.width
-    // Reference for Draggable component
-    const nodeRef = React.useRef(null)
 
     // Local state to manage texts
     const [localTexts, setLocalTexts] = useState(rawTexts)
@@ -105,39 +102,40 @@ export const MemePicture: React.FC<MemePictureProps> = ({
             data-testid={dataTestId}
         >
             {scaledTexts?.map((text, index) => (
+                /** to remove warning we can use this solution: https://github.com/react-grid-layout/react-draggable/blob/v4.4.2/lib/DraggableCore.js#L159-L171
+                 * but it creates a new div for each text and can involve a bug
+                 * there is also the possibility to remove strictMode but it's not a good solution
+                 */
                 <Draggable
                     key={index}
                     position={{ x: text.x, y: text.y }}
                     onStop={(e, data) => handleDrag(index, e, data)}
                     bounds="parent"
                     disabled={!isDraggable}
-                    nodeRef={nodeRef}
                 >
-                    <div ref={nodeRef}>
-                        <Text
-                            key={index}
-                            position="absolute"
-                            fontSize={fontSize}
-                            color={
-                                selectedTextIndex === index && isDraggable
-                                    ? 'blue'
-                                    : 'white'
-                            }
-                            fontFamily="Impact"
-                            fontWeight="bold"
-                            userSelect="none"
-                            textTransform="uppercase"
-                            cursor="pointer"
-                            style={{
-                                WebkitTextStroke: '1px black',
-                                position: 'absolute',
-                            }}
-                            data-testid={`${dataTestId}-text-${index}`}
-                            onClick={() => setSelectedTextIndex(index)}
-                        >
-                            {text.content}
-                        </Text>
-                    </div>
+                    <Text
+                        key={index}
+                        position="absolute"
+                        fontSize={fontSize}
+                        color={
+                            selectedTextIndex === index && isDraggable
+                                ? 'blue'
+                                : 'white'
+                        }
+                        fontFamily="Impact"
+                        fontWeight="bold"
+                        userSelect="none"
+                        textTransform="uppercase"
+                        cursor="pointer"
+                        style={{
+                            WebkitTextStroke: '1px black',
+                            position: 'absolute',
+                        }}
+                        data-testid={`${dataTestId}-text-${index}`}
+                        onClick={() => setSelectedTextIndex(index)}
+                    >
+                        {text.content}
+                    </Text>
                 </Draggable>
             ))}
         </Box>
