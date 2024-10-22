@@ -15,6 +15,9 @@ import { MemeEditor } from '../../components/meme-editor'
 import { useMemo, useState } from 'react'
 import { MemePictureProps } from '../../components/meme-picture'
 import { Plus, Trash } from '@phosphor-icons/react'
+import { createMeme, CreateMemeRequest } from '../../api/meme-editor'
+import { useAuthToken } from '../../contexts/authentication'
+import { v4 as uuidv4 } from 'uuid'
 
 export const Route = createFileRoute('/_authentication/create')({
     component: CreateMemePage,
@@ -29,6 +32,15 @@ function CreateMemePage() {
     const [picture, setPicture] = useState<Picture | null>(null)
     const [texts, setTexts] = useState<MemePictureProps['texts']>([])
 
+    const [description, setDescription] = useState('')
+
+    const handleDescriptionChange = (
+        event: React.ChangeEvent<HTMLTextAreaElement>
+    ) => {
+        setDescription(event.target.value)
+    }
+    const token = useAuthToken()
+
     const handleDrop = (file: File) => {
         setPicture({
             url: URL.createObjectURL(file),
@@ -37,14 +49,14 @@ function CreateMemePage() {
     }
 
     const handleAddCaptionButtonClick = () => {
-        setTexts([
-            ...texts,
-            {
-                content: `New caption ${texts.length + 1}`,
-                x: Math.random() * 400,
-                y: Math.random() * 225,
-            },
-        ])
+        const newCaption = {
+            index: uuidv4(),
+
+            content: `New caption ${texts.length + 1}`,
+            x: Math.random() * 400,
+            y: Math.random() * 225,
+        }
+        setTexts([...texts, newCaption])
     }
 
     const handleDeleteCaptionButtonClick = (index: number) => {
@@ -55,6 +67,21 @@ function CreateMemePage() {
         setTexts(
             texts.map((text, i) => (i === index ? { ...text, content } : text))
         )
+    }
+
+    const handleSubmit = async () => {
+        if (picture) {
+            const memeToSave: CreateMemeRequest = {
+                picture: picture.file,
+                description: description,
+                texts: texts,
+            }
+            const response = await createMeme(token, memeToSave)
+        }
+    }
+
+    const handleTextsUpdate = (updatedTexts: MemePictureProps['texts']) => {
+        setTexts(updatedTexts)
     }
 
     const memePicture = useMemo(() => {
@@ -79,13 +106,18 @@ function CreateMemePage() {
                         <MemeEditor
                             onDrop={handleDrop}
                             memePicture={memePicture}
+                            onTextsUpdate={handleTextsUpdate}
                         />
                     </Box>
                     <Box>
                         <Heading as="h2" size="md" mb={2}>
                             Describe your meme
                         </Heading>
-                        <Textarea placeholder="Type your description here..." />
+                        <Textarea
+                            placeholder="Type your description here..."
+                            value={description}
+                            onChange={handleDescriptionChange}
+                        />
                     </Box>
                 </VStack>
             </Box>
@@ -150,6 +182,7 @@ function CreateMemePage() {
                         width="full"
                         color="white"
                         isDisabled={memePicture === undefined}
+                        onClick={handleSubmit}
                     >
                         Submit
                     </Button>

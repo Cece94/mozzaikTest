@@ -128,6 +128,7 @@ export const MemeList: React.FC = () => {
                         pictureUrl={meme.pictureUrl}
                         texts={meme.texts}
                         dataTestId={`meme-picture-${meme.id}`}
+                        isDraggable={false}
                     />
                     <Box>
                         <Text fontWeight="bold" fontSize="medium" mb={2}>

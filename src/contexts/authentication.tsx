@@ -4,6 +4,7 @@ import {
     PropsWithChildren,
     useCallback,
     useContext,
+    useEffect,
     useMemo,
     useState,
 } from 'react'
@@ -85,6 +86,25 @@ export function useAuthentication() {
             'useAuthentication must be used within an AuthenticationProvider'
         )
     }
+
+    const { state, signout } = context
+
+    useEffect(() => {
+        if (state.isAuthenticated) {
+            try {
+                const decodedToken = jwtDecode<{ exp: number }>(state.token)
+                if (decodedToken.exp * 1000 < Date.now()) {
+                    console.log('Token has AEAZE')
+                    // Token has expired
+                    signout()
+                }
+            } catch (error) {
+                console.error('Error decoding token', error)
+                signout()
+            }
+        }
+    }, [state, signout])
+
     return context
 }
 

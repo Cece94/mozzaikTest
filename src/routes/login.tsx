@@ -40,7 +40,6 @@ export const LoginPage: React.FC = () => {
     const { mutate, isPending, error } = useMutation({
         mutationFn: (data: Inputs) => login(data.username, data.password),
         onSuccess: ({ jwt }) => {
-            console.log('hwt', jwt)
             authenticate(jwt)
         },
     })
