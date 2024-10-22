@@ -27,6 +27,7 @@ import {
 import { MemeComment } from './meme-comment'
 
 export const MemeList: React.FC = () => {
+    // Get the authentication token
     const token = useAuthToken()
     const queryClient = useQueryClient()
 
@@ -39,44 +40,52 @@ export const MemeList: React.FC = () => {
         queryKey: ['memes'],
         queryFn: ({ pageParam = 1 }) => getMemes(token, pageParam as number),
         getNextPageParam: (lastPage, allPages) => {
+            // Determine the next page number based on the total number of pages
             const nextPage = allPages.length + 1
             return nextPage <= Math.ceil(lastPage.total / lastPage.pageSize)
                 ? nextPage
                 : undefined
         },
-        initialPageParam: 1,
+        initialPageParam: 1, // Start fetching from the first page
     })
 
     useEffect(() => {
         if (memeListData) {
             const updateMemeAuthors = async () => {
+                // Collect unique author IDs from the fetched memes
+                // we do it when the meme list is updated to avoid doing it in the memelist loop
                 const newAuthorIds = memeListData.pages.flatMap((page) =>
                     page.results.map((meme) => meme.authorId)
                 )
                 const uniqueNewAuthorIds = [...new Set(newAuthorIds)]
 
+                // Fetch author details based on unique author IDs
                 const authors = await getUsers(token, uniqueNewAuthorIds)
                 const authorMap = Object.fromEntries(
-                    authors.map((author) => [author.id, author])
+                    authors.map((author) => [author.id, author]) // Create a map of authors by ID
                 )
 
+                // Update the memes with the fetched author details
                 const tempMemeList = JSON.parse(JSON.stringify(memeListData))
                 tempMemeList.pages.forEach((page: any) => {
                     page.results.forEach((meme: MemeResponsDataDto) => {
-                        meme.author = authorMap[meme.authorId]
+                        meme.author = authorMap[meme.authorId] // Assign author details to each meme
                     })
                 })
 
+                // Update the query data with the new meme list
                 queryClient.setQueryData(['memes'], tempMemeList)
             }
 
-            updateMemeAuthors()
+            updateMemeAuthors() // Call the function to update authors
         }
-    }, [memeListData])
+    }, [memeListData]) // Dependency array to run effect when memeListData changes
 
+    // Flatten the meme list for easier rendering
     const memeList: GetMemesResponse['results'] =
         memeListData?.pages.flatMap((page) => page.results) || []
 
+    // Calculate current and total pages for pagination
     const currentPage = memeListData ? memeListData.pages.length : 0
     const totalPages = memeListData?.pages[0]
         ? Math.ceil(
@@ -85,12 +94,14 @@ export const MemeList: React.FC = () => {
         : 0
 
     const handleLoadMore = () => {
+        // Load more memes if there are more pages available
         if (hasNextPage) {
             fetchNextPage()
         }
     }
 
     if (isLoading) {
+        // Show loader while data is being fetched
         return <Loader data-testid="meme-feed-loader" />
     }
 
@@ -159,7 +170,7 @@ export const MemeList: React.FC = () => {
                     colorScheme="blue"
                     size="lg"
                     onClick={handleLoadMore}
-                    isDisabled={!hasNextPage || isLoading}
+                    isDisabled={!hasNextPage || isLoading} // Disable button if no more pages or loading
                 >
                     Voir plus {currentPage} / {totalPages}
                 </Button>

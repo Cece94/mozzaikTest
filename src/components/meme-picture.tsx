@@ -26,17 +26,23 @@ export const MemePicture: React.FC<MemePictureProps> = ({
     onTextsUpdate,
     isDraggable = true,
 }) => {
+    // Reference to the container div for measuring dimensions
     const containerRef = useRef<HTMLDivElement>(null)
+    // Hook to get dimensions of the container
     const dimensions = useDimensions(containerRef, true)
     const boxWidth = dimensions?.borderBox.width
+    // Reference for Draggable component
     const nodeRef = React.useRef(null)
 
+    // Local state to manage texts
     const [localTexts, setLocalTexts] = useState(rawTexts)
 
+    // Update local texts when rawTexts prop changes
     useEffect(() => {
         setLocalTexts(rawTexts)
     }, [rawTexts])
 
+    // Calculate height, font size, and scaled text positions based on container width
     const { height, fontSize, scaledTexts } = useMemo(() => {
         if (!boxWidth) {
             return { height: 0, fontSize: 0, texts: rawTexts }
@@ -53,9 +59,12 @@ export const MemePicture: React.FC<MemePictureProps> = ({
         }
     }, [boxWidth, localTexts])
 
+    // State to track the currently selected text
     const [selectedTextIndex, setSelectedTextIndex] = useState<number | null>(
         null
     )
+
+    // Handle drag events for text elements
     const handleDrag = (
         index: number,
         e: DraggableEvent,
@@ -65,7 +74,7 @@ export const MemePicture: React.FC<MemePictureProps> = ({
 
         const scale = boxWidth / REF_WIDTH
 
-        // Create a new copy of localTexts
+        // Update the position of the dragged text
         const updatedLocalTexts = [...localTexts]
         updatedLocalTexts[index] = {
             ...updatedLocalTexts[index],
@@ -73,7 +82,7 @@ export const MemePicture: React.FC<MemePictureProps> = ({
             y: data.y / scale,
         }
 
-        // Update local state
+        // Update local state and propagate changes to parent
         setLocalTexts(updatedLocalTexts)
 
         // Propagate the changes to the parent

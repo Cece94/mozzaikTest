@@ -9,6 +9,7 @@ export type MemeEditorProps = {
     onTextsUpdate: (updatedTexts: MemePictureProps['texts']) => void
 }
 
+// Component to render when no picture is selected
 function renderNoPicture() {
     return (
         <Flex
@@ -27,6 +28,7 @@ function renderNoPicture() {
     )
 }
 
+// Component to render when a picture is selected
 function renderMemePicture(
     memePicture: MemePictureProps,
     open: () => void,
@@ -68,11 +70,13 @@ function renderMemePicture(
     )
 }
 
+// Main MemeEditor component
 export const MemeEditor: React.FC<MemeEditorProps> = ({
     onDrop,
     memePicture,
     onTextsUpdate,
 }) => {
+    // Set up react-dropzone hooks and options
     const { getRootProps, getInputProps, open } = useDropzone({
         onDrop: (files: File[]) => {
             if (files.length === 0) {
@@ -96,6 +100,7 @@ export const MemeEditor: React.FC<MemeEditorProps> = ({
                 px={1}
             >
                 <input {...getInputProps()} />
+                {/* Render either the meme picture or the "no picture" state */}
                 {memePicture
                     ? renderMemePicture(memePicture, open, onTextsUpdate)
                     : renderNoPicture()}

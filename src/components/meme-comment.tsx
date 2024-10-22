@@ -40,6 +40,7 @@ export const MemeComment: React.FC<MemeCommentProps> = ({ meme }) => {
     const token = useAuthToken()
     const queryClient = useQueryClient()
 
+    // Fetch comments for the meme using infinite query
     const {
         isLoading,
         fetchNextPage,
@@ -49,26 +50,25 @@ export const MemeComment: React.FC<MemeCommentProps> = ({ meme }) => {
     } = useInfiniteQuery<GetMemeCommentsResponse, Error>({
         queryKey: ['comments', meme.id],
         queryFn: async ({ pageParam = 1 }) => {
+            // Fetch comments for this meme
             const comments = await getMemeComments(
                 token,
                 meme.id,
                 pageParam as number
             )
 
-            // Extract unique author IDs from the comments
+            // Fetch all author info in one go for efficiency
             const authorIds = [
                 ...new Set(comments.results.map((comment) => comment.authorId)),
             ]
-
-            // Fetch user information for all authors
             const authors = await getUsers(token, authorIds)
 
-            // Create a map of user IDs to user objects for quick lookup
+            // Create a map of user IDs to user objects
             const userMap = new Map(
                 authors.map((author) => [author.id, author])
             )
 
-            // add authors information to comments
+            // Enhance comments with author info
             const enhancedResults = comments.results.map((comment) => ({
                 ...comment,
                 author: userMap.get(comment.authorId) || {
@@ -84,6 +84,7 @@ export const MemeComment: React.FC<MemeCommentProps> = ({ meme }) => {
             }
         },
 
+        // Determine if there are more comments to load
         getNextPageParam: (lastPage, allPages) => {
             const nextPage = allPages.length + 1
             return nextPage <= Math.ceil(lastPage.total / lastPage.pageSize)
@@ -91,17 +92,20 @@ export const MemeComment: React.FC<MemeCommentProps> = ({ meme }) => {
                 : undefined
         },
         initialPageParam: 1,
-        enabled: false,
+        enabled: false, // Manual trigger when needed
     })
 
+    // Flatten the comment data for easier rendering
     const memeCommentList: GetMemeCommentsResponse['results'] =
         commentData?.pages.flatMap((page) => page.results) || []
 
+    // Calculate current page and total pages for pagination
     const currentPage = commentData ? commentData.pages.length : 0
     const totalPages = commentData?.pages[0]
         ? Math.ceil(commentData.pages[0].total / commentData.pages[0].pageSize)
         : 0
 
+    // Fetch current user data
     const { data: user } = useQuery({
         queryKey: ['user'],
         queryFn: async () => {
@@ -109,8 +113,10 @@ export const MemeComment: React.FC<MemeCommentProps> = ({ meme }) => {
         },
     })
 
+    // State for comment section visibility
     const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false)
 
+    // Toggle comment section and fetch comments when opening
     const handleCommentSectionToggle = () => {
         setIsCommentSectionOpen((prevState) => !prevState)
         if (!isCommentSectionOpen) {
@@ -118,10 +124,12 @@ export const MemeComment: React.FC<MemeCommentProps> = ({ meme }) => {
         }
     }
 
+    // State for comment input
     const [commentContent, setCommentContent] = useState<{
         [key: string]: string
     }>({ [meme.id]: '' })
 
+    // Mutation for creating a new comment
     const { mutate } = useMutation({
         mutationFn: async (data: { memeId: string; content: string }) => {
             await createMemeComment(token, data.memeId, data.content)
