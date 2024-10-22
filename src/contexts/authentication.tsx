@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router'
 import { jwtDecode } from 'jwt-decode'
 import {
     createContext,
@@ -81,6 +82,8 @@ export const AuthenticationProvider: React.FC<PropsWithChildren> = ({
 
 export function useAuthentication() {
     const context = useContext(AuthenticationContext)
+    const navigate = useNavigate()
+
     if (!context) {
         throw new Error(
             'useAuthentication must be used within an AuthenticationProvider'
@@ -94,13 +97,11 @@ export function useAuthentication() {
             try {
                 const decodedToken = jwtDecode<{ exp: number }>(state.token)
                 if (decodedToken.exp * 1000 < Date.now()) {
-                    console.log('Token has AEAZE')
-                    // Token has expired
-                    signout()
+                    navigate({ to: '/' })
                 }
             } catch (error) {
                 console.error('Error decoding token', error)
-                signout()
+                navigate({ to: '/' })
             }
         }
     }, [state, signout])

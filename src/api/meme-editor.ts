@@ -41,10 +41,6 @@ export async function createMeme(
             body: formData,
         })
 
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`)
-        }
-
         if (!response.ok) {
             const errorBody = await response.text()
             throw new Error(`HTTP error! status: ${response.status}`)
