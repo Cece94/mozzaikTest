@@ -10,7 +10,7 @@ import {
     Textarea,
     VStack,
 } from '@chakra-ui/react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { MemeEditor } from '../../components/meme-editor'
 import { useMemo, useState } from 'react'
 import { MemePictureProps } from '../../components/meme-picture'
@@ -34,12 +34,14 @@ function CreateMemePage() {
 
     const [description, setDescription] = useState('')
 
+    const token = useAuthToken()
+    const navigate = useNavigate()
+
     const handleDescriptionChange = (
         event: React.ChangeEvent<HTMLTextAreaElement>
     ) => {
         setDescription(event.target.value)
     }
-    const token = useAuthToken()
 
     const handleDrop = (file: File) => {
         setPicture({
@@ -77,6 +79,7 @@ function CreateMemePage() {
                 texts: texts,
             }
             const response = await createMeme(token, memeToSave)
+            navigate({ to: '/' })
         }
     }
 
